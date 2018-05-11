@@ -10,6 +10,8 @@ var indexRouter = require('./routes/index');
 var fileRouter = require('./routes/file');
 var chaincodeRouter = require('./routes/chaincode');
 
+var socketio = require('socket.io');
+var socketEvents = require('./socketEvents.js');
 var app = express();
 
 // view engine setup
@@ -25,8 +27,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 // app.use('/users', usersRouter);
-app.use('/file', fileRouter);
-app.use('/chaincode', chaincodeRouter);
+// app.use('/file', fileRouter);
+// app.use('/chaincode', chaincodeRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -43,5 +45,12 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+const server = app.listen(8080, () => { // const server 부분 추가
+  console.log('Express App on port 8080!');
+});
+
+const SOCKET = new socketio(server);
+socketEvents(SOCKET);
+
 
 module.exports = app;

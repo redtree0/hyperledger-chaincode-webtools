@@ -381,7 +381,7 @@
     //      resolve(container.logs ({ "stdout" : true}));
     //    });
     //  }
-    self.exec = function(data, cmd){
+    self.exec = function(data, cmd, callback){
       var docker = self.docker;
       var container = docker.getContainer(data);
       console.log(container);
@@ -400,9 +400,14 @@
        console.log(exec);
 
         exec.start({hijack: true, stdin: true, Tty : true, Detach : false},function(err, stream) {
+          if (callback && err) return callback("error");
           if (err) return;
           container.modem.demuxStream(stream, process.stdout, process.stderr);
-
+          stream.on('end', function(){
+            if(callback){
+              callback(cmd + " done");
+            }
+          });
           exec.inspect(function(err, data) {
             if (err) return;
             console.log(data);
@@ -439,6 +444,56 @@
       });
       //  });
      };
+
+     var stream = require('stream');
+     var instance = null;
+     self.logs = function(data, callback){
+
+
+       var docker = self.docker;
+       var container = docker.getContainer(data);
+       var logStream = new stream.PassThrough();
+       // console.log(container);
+       logStream.on('data', function(chunk){
+          // console.log("Called");
+         // console.log(chunk.toString('utf8'));
+         callback(chunk.toString('utf8'));
+       });
+
+       container.logs({
+         follow: true,
+         stdout: true,
+         stderr: true,
+          tail:1000,
+       }, function(err, stream){
+         if(err) {
+           return logger.error(err.message);
+         }
+
+
+         container.modem.demuxStream(stream, logStream, logStream);
+         stream.on('end', function(){
+           logStream.end('!stop!');
+         });
+
+         if(instance == null){
+           instance = stream;
+         }
+         setTimeout(function() {
+           instance.destroy();
+           instance = null;
+         }, 2000);
+       });
+     }
+
+     // self.stopLog = function(data, callback){
+     //   if(instance != null){
+     //     instance.destroy();
+     //     instance = null;
+     //   }
+     // }
+
+
    }).call(Container);
 
 
