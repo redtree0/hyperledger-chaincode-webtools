@@ -2,7 +2,7 @@
 
 $(function(){
 
-    const DOMAIN = "http://192.168.137.17";
+    const DOMAIN = "http://localhost";
     var socket = io.connect(DOMAIN +':8080');
 
 
@@ -26,6 +26,7 @@ $(function(){
         ClickSaveBtn();
 
         function LoadFile(){
+          console.log("loadFile");
           socket.emit('ReadFile', "", function (data) {
              console.log(data);
              chaincode_path.value = data.path;
@@ -124,9 +125,9 @@ $(function(){
            chaincode_btn.onclick = function() {
              console.log("clicked");
              console.log(containerId);
-               if(containerId != null){
+              //  if(containerId != null){
                  ExecDocker("RunChainCode");
-               }
+              //  }
             };
          }
 
